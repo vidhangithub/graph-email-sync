@@ -1,0 +1,226 @@
+{
+  "name": "MS Graph Email Sync API",
+  "version": "1.0.0",
+  "items": [
+    {
+      "name": "Admin APIs",
+      "type": "folder",
+      "items": [
+        {
+          "name": "Get All Mailboxes",
+          "type": "http",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/mailboxes",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          },
+          "tests": "test('Status is 200', () => {\n  expect(res.status).to.equal(200);\n});\n\ntest('Response is array', () => {\n  expect(res.body).to.be.an('array');\n});\n\ntest('Each mailbox has required fields', () => {\n  res.body.forEach(mailbox => {\n    expect(mailbox).to.have.property('emailAddress');\n    expect(mailbox).to.have.property('syncStatus');\n    expect(mailbox).to.have.property('initialSyncCompleted');\n  });\n});"
+        },
+        {
+          "name": "Get Mailbox Status",
+          "type": "http",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/mailboxes/{{mailboxEmail}}",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          },
+          "tests": "test('Status is 200', () => {\n  expect(res.status).to.equal(200);\n});\n\ntest('Mailbox has correct email', () => {\n  expect(res.body.emailAddress).to.equal(bru.getEnvVar('mailboxEmail'));\n});\n\ntest('Sync status is valid', () => {\n  const validStatuses = ['NOT_INITIALIZED', 'INITIALIZING', 'ACTIVE', 'ERROR', 'SUBSCRIPTION_EXPIRED', 'DISABLED'];\n  expect(validStatuses).to.include(res.body.syncStatus);\n});"
+        },
+        {
+          "name": "Initialize Mailbox",
+          "type": "http",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/mailboxes/{{mailboxEmail}}/initialize",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          },
+          "tests": "test('Status is 200', () => {\n  expect(res.status).to.equal(200);\n});\n\ntest('Response indicates success', () => {\n  expect(res.body.status).to.equal('success');\n});"
+        },
+        {
+          "name": "Trigger Manual Sync",
+          "type": "http",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/mailboxes/{{mailboxEmail}}/sync",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          },
+          "tests": "test('Status is 200', () => {\n  expect(res.status).to.equal(200);\n});\n\ntest('Sync completed', () => {\n  expect(res.body.status).to.equal('success');\n  expect(res.body.message).to.include('sync');\n});"
+        },
+        {
+          "name": "Renew Subscription",
+          "type": "http",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/mailboxes/{{mailboxEmail}}/subscription/renew",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          },
+          "tests": "test('Status is 200', () => {\n  expect(res.status).to.equal(200);\n});\n\ntest('Renewal successful', () => {\n  expect(res.body.status).to.equal('success');\n});"
+        },
+        {
+          "name": "Reinitialize Mailbox",
+          "type": "http",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/mailboxes/{{mailboxEmail}}/reinitialize",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          },
+          "tests": "test('Status is 200', () => {\n  expect(res.status).to.equal(200);\n});\n\ntest('Reinitialization successful', () => {\n  expect(res.body.status).to.equal('success');\n});"
+        },
+        {
+          "name": "Get Statistics",
+          "type": "http",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/stats",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          },
+          "tests": "test('Status is 200', () => {\n  expect(res.status).to.equal(200);\n});\n\ntest('Stats have required fields', () => {\n  expect(res.body).to.have.property('totalMailboxes');\n  expect(res.body).to.have.property('activeMailboxes');\n  expect(res.body).to.have.property('totalEmails');\n  expect(res.body).to.have.property('pendingNotifications');\n});\n\ntest('Stats are numbers', () => {\n  expect(res.body.totalMailboxes).to.be.a('number');\n  expect(res.body.activeMailboxes).to.be.a('number');\n  expect(res.body.totalEmails).to.be.a('number');\n});"
+        }
+      ]
+    },
+    {
+      "name": "Webhook APIs",
+      "type": "folder",
+      "items": [
+        {
+          "name": "Webhook Health Check",
+          "type": "http",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/webhooks/health",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          },
+          "tests": "test('Status is 200', () => {\n  expect(res.status).to.equal(200);\n});\n\ntest('Service is UP', () => {\n  expect(res.body.status).to.equal('UP');\n});"
+        },
+        {
+          "name": "Simulate Webhook Validation",
+          "type": "http",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/webhooks/graph?validationToken=test-token-12345",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          },
+          "tests": "test('Status is 200', () => {\n  expect(res.status).to.equal(200);\n});\n\ntest('Echoes validation token', () => {\n  expect(res.body).to.equal('test-token-12345');\n});"
+        },
+        {
+          "name": "Simulate Webhook Notification",
+          "type": "http",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/webhooks/graph",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"value\": [\n    {\n      \"subscriptionId\": \"test-subscription-id\",\n      \"changeType\": \"created\",\n      \"resource\": \"users/user@domain.com/messages/AAMkAGI2THVSAAA=\",\n      \"clientState\": \"my-super-secret-state-string-change-this\",\n      \"subscriptionExpirationDateTime\": \"2024-01-15T00:00:00Z\",\n      \"resourceData\": {\n        \"@odata.type\": \"#Microsoft.Graph.Message\",\n        \"@odata.id\": \"Users/user@domain.com/Messages/AAMkAGI2THVSAAA=\",\n        \"@odata.etag\": \"W/\\\"CQAAABYAAAAs+XSiRm+xR7a2xKiWYp0EAAICq6Bp\\\"\",\n        \"id\": \"AAMkAGI2THVSAAA=\"\n      }\n    }\n  ]\n}"
+            }
+          },
+          "tests": "test('Status is 202 Accepted', () => {\n  expect(res.status).to.equal(202);\n});"
+        }
+      ]
+    },
+    {
+      "name": "Actuator APIs",
+      "type": "folder",
+      "items": [
+        {
+          "name": "Health Check",
+          "type": "http",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/actuator/health",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          },
+          "tests": "test('Status is 200', () => {\n  expect(res.status).to.equal(200);\n});\n\ntest('Application is UP', () => {\n  expect(res.body.status).to.equal('UP');\n});"
+        },
+        {
+          "name": "Get Metrics",
+          "type": "http",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/actuator/metrics",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          },
+          "tests": "test('Status is 200', () => {\n  expect(res.status).to.equal(200);\n});\n\ntest('Has metrics', () => {\n  expect(res.body).to.have.property('names');\n  expect(res.body.names).to.be.an('array');\n});"
+        },
+        {
+          "name": "Get JVM Memory",
+          "type": "http",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/actuator/metrics/jvm.memory.used",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "name": "Prometheus Metrics",
+          "type": "http",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/actuator/prometheus",
+            "headers": [],
+            "body": {
+              "mode": "none"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "environments": [
+    {
+      "name": "Local",
+      "variables": {
+        "baseUrl": "http://localhost:8080",
+        "mailboxEmail": "user@yourdomain.com"
+      }
+    },
+    {
+      "name": "Development",
+      "variables": {
+        "baseUrl": "https://dev-api.yourdomain.com",
+        "mailboxEmail": "devuser@yourdomain.com"
+      }
+    }
+  ]
+}

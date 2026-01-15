@@ -1,0 +1,41 @@
+COMPLETE FILE LIST - Copy from artifacts:
+
+ROOT FILES:
+☑ pom.xml
+☑ .gitignore
+☑ .env.example
+☑ Dockerfile
+☑ docker-compose.yml
+□ README.md
+□ TESTING.md
+□ PROJECT_STRUCTURE.md
+
+JAVA SOURCE:
+□ src/main/java/com/markets/emailsync/GraphEmailSyncApplication.java
+□ src/main/java/com/markets/emailsync/config/GraphConfiguration.java
+□ src/main/java/com/markets/emailsync/config/MicrosoftGraphProperties.java
+□ src/main/java/com/markets/emailsync/entity/MailboxEntity.java
+□ src/main/java/com/markets/emailsync/entity/EmailEntity.java
+□ src/main/java/com/markets/emailsync/entity/WebhookNotificationEntity.java
+□ src/main/java/com/markets/emailsync/repository/MailboxRepository.java
+□ src/main/java/com/markets/emailsync/repository/EmailRepository.java
+□ src/main/java/com/markets/emailsync/repository/WebhookNotificationRepository.java
+□ src/main/java/com/markets/emailsync/service/GraphService.java
+□ src/main/java/com/markets/emailsync/service/EmailSyncService.java
+□ src/main/java/com/markets/emailsync/service/SubscriptionService.java
+□ src/main/java/com/markets/emailsync/service/WebhookProcessingService.java
+□ src/main/java/com/markets/emailsync/service/MailboxInitializationService.java
+□ src/main/java/com/markets/emailsync/controller/WebhookController.java
+□ src/main/java/com/markets/emailsync/controller/AdminController.java
+
+RESOURCES:
+□ src/main/resources/application.yml
+□ src/main/resources/db/changelog/db.changelog-master.xml
+
+TESTS:
+□ src/test/java/com/markets/emailsync/service/EmailSyncServiceTest.java
+
+BRUNO:
+□ bruno-collection/bruno.json
+
+Check each box as you create it!

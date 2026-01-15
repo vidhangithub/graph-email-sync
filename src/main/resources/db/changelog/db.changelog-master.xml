@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="1" author="system">
+        <comment>Create mailboxes table</comment>
+        <createTable tableName="mailboxes">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email_address" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="user_id" type="VARCHAR(100)"/>
+            <column name="delta_link" type="VARCHAR(2048)"/>
+            <column name="subscription_id" type="VARCHAR(100)"/>
+            <column name="subscription_expiration" type="TIMESTAMP"/>
+            <column name="sync_status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_sync_time" type="TIMESTAMP"/>
+            <column name="initial_sync_completed" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="error_message" type="VARCHAR(1000)"/>
+            <column name="retry_count" type="INT" defaultValueNumeric="0"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="mailboxes" indexName="idx_mailbox_email">
+            <column name="email_address"/>
+        </createIndex>
+        <createIndex tableName="mailboxes" indexName="idx_mailbox_status">
+            <column name="sync_status"/>
+        </createIndex>
+        <createIndex tableName="mailboxes" indexName="idx_mailbox_subscription">
+            <column name="subscription_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="2" author="system">
+        <comment>Create emails table</comment>
+        <createTable tableName="emails">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="message_id" type="VARCHAR(500)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="mailbox_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_email_mailbox"
+                             references="mailboxes(id)"/>
+            </column>
+            <column name="subject" type="VARCHAR(1000)"/>
+            <column name="sender_email" type="VARCHAR(255)"/>
+            <column name="sender_name" type="VARCHAR(255)"/>
+            <column name="recipient_emails" type="VARCHAR(2000)"/>
+            <column name="received_date_time" type="TIMESTAMP"/>
+            <column name="has_attachments" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="is_read" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="importance" type="VARCHAR(20)"/>
+            <column name="body_preview" type="VARCHAR(500)"/>
+            <column name="body_content" type="TEXT"/>
+            <column name="body_content_type" type="VARCHAR(20)"/>
+            <column name="categories" type="VARCHAR(500)"/>
+            <column name="conversation_id" type="VARCHAR(500)"/>
+            <column name="change_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_deleted" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="raw_data" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="emails" indexName="idx_email_message_id">
+            <column name="message_id"/>
+        </createIndex>
+        <createIndex tableName="emails" indexName="idx_email_mailbox">
+            <column name="mailbox_id"/>
+        </createIndex>
+        <createIndex tableName="emails" indexName="idx_email_received">
+            <column name="received_date_time"/>
+        </createIndex>
+        <createIndex tableName="emails" indexName="idx_email_change_type">
+            <column name="change_type"/>
+        </createIndex>
+        <createIndex tableName="emails" indexName="idx_email_conversation">
+            <column name="conversation_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="3" author="system">
+        <comment>Create webhook_notifications table</comment>
+        <createTable tableName="webhook_notifications">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="subscription_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="change_type" type="VARCHAR(50)"/>
+            <column name="resource" type="VARCHAR(1000)"/>
+            <column name="client_state" type="VARCHAR(255)"/>
+            <column name="processed" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processing_error" type="VARCHAR(2000)"/>
+            <column name="retry_count" type="INT" defaultValueNumeric="0"/>
+            <column name="raw_payload" type="TEXT"/>
+            <column name="received_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processed_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="webhook_notifications" indexName="idx_webhook_subscription">
+            <column name="subscription_id"/>
+        </createIndex>
+        <createIndex tableName="webhook_notifications" indexName="idx_webhook_processed">
+            <column name="processed"/>
+        </createIndex>
+        <createIndex tableName="webhook_notifications" indexName="idx_webhook_received">
+            <column name="received_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,170 @@
+spring:
+  application:
+    name: graph-email-sync
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/email_sync
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+
+  quartz:
+    job-store-type: jdbc
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: EmailSyncScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            useProperties: false
+            misfireThreshold: 60000
+            tablePrefix: QRTZ_
+            isClustered: true
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 5
+            threadPriority: 5
+
+# Microsoft Graph Configuration
+microsoft:
+  graph:
+    tenant-id: ${AZURE_TENANT_ID}
+    client-id: ${AZURE_CLIENT_ID}
+    client-secret: ${AZURE_CLIENT_SECRET}
+    scopes:
+      - https://graph.microsoft.com/.default
+
+    # Mailboxes to monitor (user principal names or IDs)
+    mailboxes:
+      - user1@yourdomain.com
+      - user2@yourdomain.com
+
+    # Subscription settings
+    subscription:
+      notification-url: ${WEBHOOK_URL:https://your-domain.com/api/webhooks/graph}
+      client-state: ${WEBHOOK_CLIENT_STATE:random-secret-string-change-me}
+      expiration-hours: 72  # Max 4230 minutes (2.9 days) for mail
+      renewal-before-hours: 12
+
+    # Delta query settings
+    delta:
+      page-size: 50
+      initial-sync-days-back: 7
+
+    # Retry configuration
+    retry:
+      max-attempts: 3
+      initial-interval-ms: 1000
+      multiplier: 2.0
+      max-interval-ms: 10000
+
+# Email Processing Configuration
+email:
+  processing:
+    enabled: true
+    batch-size: 100
+    # Define what to extract from emails
+    extract:
+      body: true
+      attachments: false
+      headers: true
+
+# Resilience4j Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      graphApi:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 60s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+
+  retry:
+    instances:
+      graphApi:
+        max-attempts: 3
+        wait-duration: 1s
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - com.microsoft.graph.http.GraphServiceException
+
+  ratelimiter:
+    instances:
+      graphApi:
+        limit-for-period: 100
+        limit-refresh-period: 1s
+        timeout-duration: 5s
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,liquibase
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.markets: DEBUG
+    com.microsoft.graph: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/graph-email-sync.log
+    max-size: 10MB
+    max-history: 30
+
+# Server Configuration
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+  compression:
+    enabled: true
+  http2:
+    enabled: true
