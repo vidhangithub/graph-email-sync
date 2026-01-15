@@ -38,19 +38,19 @@ public class WebhookProcessingService {
                                     String rawPayload) {
         log.info("Processing webhook notification for subscription: {}", subscriptionId);
 
+        // Persist notification for idempotency and audit - keep reference for error handling
+        WebhookNotificationEntity notification = WebhookNotificationEntity.builder()
+                .subscriptionId(subscriptionId)
+                .changeType(changeType)
+                .resource(resource)
+                .clientState(clientState)
+                .rawPayload(rawPayload)
+                .processed(false)
+                .build();
+
+        notification = notificationRepository.save(notification);
+
         try {
-            // Persist notification for idempotency and audit
-            WebhookNotificationEntity notification = WebhookNotificationEntity.builder()
-                    .subscriptionId(subscriptionId)
-                    .changeType(changeType)
-                    .resource(resource)
-                    .clientState(clientState)
-                    .rawPayload(rawPayload)
-                    .processed(false)
-                    .build();
-
-            notification = notificationRepository.save(notification);
-
             // Find the mailbox for this subscription
             Optional<MailboxEntity> mailboxOpt = mailboxRepository
                     .findBySubscriptionId(subscriptionId);
@@ -80,18 +80,10 @@ public class WebhookProcessingService {
         } catch (Exception e) {
             log.error("Error processing webhook notification: {}", e.getMessage(), e);
 
-            // Update notification with error
-            WebhookNotificationEntity notification = notificationRepository
-                    .findBySubscriptionIdAndProcessedFalse(subscriptionId)
-                    .stream()
-                    .findFirst()
-                    .orElse(null);
-
-            if (notification != null) {
-                notification.setProcessingError(e.getMessage());
-                notification.setRetryCount(notification.getRetryCount() + 1);
-                notificationRepository.save(notification);
-            }
+            // Update notification with error using the reference we already have
+            notification.setProcessingError(e.getMessage());
+            notification.setRetryCount(notification.getRetryCount() + 1);
+            notificationRepository.save(notification);
         }
     }
 

@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -146,9 +145,7 @@ public class EmailSyncService {
                 } else {
                     // Create new message
                     EmailEntity email = createEmailFromMessage(message, mailbox);
-                    email.setChangeType(isInitialSync ?
-                            EmailEntity.ChangeType.CREATED :
-                            EmailEntity.ChangeType.CREATED);
+                    email.setChangeType(EmailEntity.ChangeType.CREATED);
                     emailRepository.save(email);
                     log.debug("Created new email: {}", message.id);
                 }
@@ -175,26 +172,26 @@ public class EmailSyncService {
     private void updateEmailFromMessage(EmailEntity email, Message message) {
         email.setSubject(message.subject);
 
-        if (message.from != null && message.from.emailAddress != null) {
+        if (message.from != null && message.from.emailAddress != null
+                && message.from.emailAddress.address != null) {
             email.setSenderEmail(message.from.emailAddress.address);
             email.setSenderName(message.from.emailAddress.name);
         }
 
         if (message.toRecipients != null && !message.toRecipients.isEmpty()) {
             String recipients = message.toRecipients.stream()
+                    .filter(r -> r.emailAddress != null && r.emailAddress.address != null)
                     .map(r -> r.emailAddress.address)
                     .collect(Collectors.joining(", "));
             email.setRecipientEmails(recipients);
         }
 
         if (message.receivedDateTime != null) {
-            email.setReceivedDateTime(
-                    message.receivedDateTime.atZoneSameInstant(ZoneId.systemDefault())
-                            .toInstant());
+            email.setReceivedDateTime(message.receivedDateTime.toInstant());
         }
 
         email.setHasAttachments(message.hasAttachments != null && message.hasAttachments);
-        email.setIsRead(message.isRead != null && message.isRead);
+        email.setRead(message.isRead != null && message.isRead);
         email.setImportance(message.importance != null ?
                 message.importance.name() : null);
         email.setBodyPreview(message.bodyPreview);

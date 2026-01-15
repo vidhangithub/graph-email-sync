@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Map;
 
 @Slf4j
@@ -66,6 +68,14 @@ public class WebhookController {
             }
 
             for (JsonNode notification : valueArray) {
+                // Validate required fields exist
+                if (!notification.has("subscriptionId") ||
+                        !notification.has("changeType") ||
+                        !notification.has("resource")) {
+                    log.error("Invalid webhook payload - missing required fields");
+                    continue;
+                }
+
                 String subscriptionId = notification.get("subscriptionId").asText();
                 String changeType = notification.get("changeType").asText();
                 String resource = notification.get("resource").asText();
@@ -95,7 +105,13 @@ public class WebhookController {
 
     private boolean validateClientState(String clientState) {
         String expectedState = properties.getSubscription().getClientState();
-        return expectedState != null && expectedState.equals(clientState);
+        if (expectedState == null || clientState == null) {
+            return false;
+        }
+        // Use constant-time comparison to prevent timing attacks
+        return MessageDigest.isEqual(
+                expectedState.getBytes(StandardCharsets.UTF_8),
+                clientState.getBytes(StandardCharsets.UTF_8));
     }
 
     /**

@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.repository.query.Param;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -22,10 +24,14 @@ public interface MailboxRepository extends JpaRepository<MailboxEntity, Long> {
 
     @Query("SELECT m FROM MailboxEntity m WHERE m.subscriptionExpiration IS NOT NULL " +
             "AND m.subscriptionExpiration < :expirationThreshold " +
-            "AND m.syncStatus = 'ACTIVE'")
-    List<MailboxEntity> findMailboxesNeedingSubscriptionRenewal(Instant expirationThreshold);
+            "AND m.syncStatus = :syncStatus")
+    List<MailboxEntity> findMailboxesNeedingSubscriptionRenewal(
+            @Param("expirationThreshold") Instant expirationThreshold,
+            @Param("syncStatus") MailboxEntity.SyncStatus syncStatus);
 
-    @Query("SELECT m FROM MailboxEntity m WHERE m.syncStatus = 'ACTIVE' " +
+    @Query("SELECT m FROM MailboxEntity m WHERE m.syncStatus = :syncStatus " +
             "AND (m.lastSyncTime IS NULL OR m.lastSyncTime < :threshold)")
-    List<MailboxEntity> findStaleMailboxes(Instant threshold);
+    List<MailboxEntity> findStaleMailboxes(
+            @Param("threshold") Instant threshold,
+            @Param("syncStatus") MailboxEntity.SyncStatus syncStatus);
 }

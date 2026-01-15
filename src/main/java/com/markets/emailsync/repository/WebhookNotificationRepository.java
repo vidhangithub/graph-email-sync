@@ -18,6 +18,8 @@ public interface WebhookNotificationRepository extends JpaRepository<WebhookNoti
 
     List<WebhookNotificationEntity> findBySubscriptionIdAndProcessedFalse(String subscriptionId);
 
+    Optional<WebhookNotificationEntity> findFirstBySubscriptionIdAndProcessedFalseOrderByReceivedAtAsc(String subscriptionId);
+
     @Query("SELECT w FROM WebhookNotificationEntity w WHERE w.processed = false " +
             "AND w.retryCount < :maxRetries ORDER BY w.receivedAt ASC")
     List<WebhookNotificationEntity> findUnprocessedWithRetriesAvailable(int maxRetries);

@@ -117,7 +117,7 @@ public class SubscriptionService {
                 ChronoUnit.HOURS);
 
         List<MailboxEntity> mailboxes = mailboxRepository
-                .findMailboxesNeedingSubscriptionRenewal(threshold);
+                .findMailboxesNeedingSubscriptionRenewal(threshold, MailboxEntity.SyncStatus.ACTIVE);
 
         log.info("Found {} subscriptions needing renewal", mailboxes.size());
 
